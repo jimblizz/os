@@ -1,0 +1,15 @@
+[package]
+name = "os"
+version = "0.1.0"
+authors = ["James Blizzard <jim@acidhl.co.uk>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+rlibc = "0.1.4"
+volatile = "0.1.0"
+spin = "0.3.4"

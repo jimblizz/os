@@ -31,11 +31,12 @@ extern fn panic_fmt(fmt: core::fmt::Arguments, file: &str, line: u32) -> ! {
 
 #[no_mangle]
 pub extern fn kmain(multiboot_information_address: usize) -> ! {
-
     // ATTENTION: we have a very small stack and no guard page
-    vga_buffer::clear_screen();   // This doesn't work for some reason?
+
+    vga_buffer::clear_screen();
     println!("Starting...");
 
+    // ** Memory areas
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
 
@@ -44,8 +45,16 @@ pub extern fn kmain(multiboot_information_address: usize) -> ! {
         println!("    start: 0x{:x}, length: 0x{:x}", area.base_addr, area.length);
     }
 
-    println!("Ready");
+    // ** Kernel sections
+    let elf_sections_tag = boot_info.elf_sections_tag().expect("Elf-sections tag required");
 
-    panic!();
+    println!("Kernel sections:");
+    for section in elf_sections_tag.sections() {
+        println!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
+            section.addr, section.size, section.flags);
+    }
+
+    // ** Done
+    println!("Ready");
     loop { }
 }

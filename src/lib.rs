@@ -8,8 +8,12 @@ extern crate volatile;
 extern crate spin;
 extern crate multiboot2;
 
+use memory::FrameAllocator;
+
 #[macro_use]
 mod vga_buffer;
+
+mod memory;
 
 #[cfg(test)]
 mod tests {
@@ -61,6 +65,17 @@ pub extern fn kmain(multiboot_information_address: usize) -> ! {
     let multiboot_start = multiboot_information_address;
     let multiboot_end = multiboot_start + (boot_info.total_size as usize);
     println!("    multiboot start: 0x{:x}, end: 0x{:x}", multiboot_start, multiboot_end);
+
+    // ** Frame allocator
+    let mut frame_allocator = memory::AreaFrameAllocator::new(
+        kernel_start as usize, kernel_end as usize, multiboot_start,
+        multiboot_end, memory_map_tag.memory_areas()
+    );
+
+    println!("{:?}", frame_allocator.allocate_frame());
+    println!("{:?}", frame_allocator.allocate_frame());
+    println!("{:?}", frame_allocator.allocate_frame());
+    println!("{:?}", frame_allocator.allocate_frame());
 
     // ** Done
     println!("Ready");

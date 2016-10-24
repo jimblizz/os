@@ -1,6 +1,7 @@
 #![feature(lang_items)]
 #![feature(const_fn, unique)]
 #![feature(unique)]
+#![feature(asm)]
 #![no_std]
 
 extern crate rlibc;
@@ -8,6 +9,7 @@ extern crate volatile;
 extern crate spin;
 extern crate multiboot2;
 extern crate hole_list_allocator;
+extern crate bit_field;
 
 #[macro_use]
 extern crate bitflags;
@@ -19,9 +21,13 @@ extern crate once;
 extern crate x86;
 
 #[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
 mod vga_buffer;
 
 mod memory;
+mod interrupts;
 
 #[cfg(test)]
 mod tests {
@@ -45,6 +51,12 @@ pub extern "C" fn kmain(multiboot_information_address: usize) -> ! {
 
     memory::init(boot_info);
 
+    // ** Interrupts
+    interrupts::init();
+
+    // Provoke a crash, div by zero
+    divide_by_zero();
+
     // ** Done
     println!("Ready");
     loop { }
@@ -65,6 +77,12 @@ fn enable_write_protect_bit() {
 
     let wp_bit = 1 << 16;
     unsafe { cr0_write(cr0() | wp_bit) };
+}
+
+fn divide_by_zero() {
+    unsafe {
+        asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel");
+    }
 }
 
 #[cfg(not(test))]
